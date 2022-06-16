@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-const messageRoute = require("./routes/Messages");
+const messagesRoutes = require("./routes/Messages");
 
 const app = express();
 const router = require("express").Router;
@@ -14,5 +14,5 @@ app.listen(3000, () => {
 }
 );
 
-app.use("/", );
+app.use("/", messagesRoutes);
 
