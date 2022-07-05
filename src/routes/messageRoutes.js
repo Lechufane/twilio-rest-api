@@ -23,12 +23,6 @@ router.post('/sendMessage', (req, res) => {
     })
 })
 
-router.get('chat', (req, res)=>{
-    let chat = [];
-    client.messages.list({limit: 20})
-    
-})
-
 router.get('/conversations', (req, res) => {
     let conversationsArray = []
     client
