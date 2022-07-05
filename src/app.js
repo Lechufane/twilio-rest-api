@@ -1,18 +1,21 @@
-const express = require("express");
-const path = require("path");
-const messagesRoutes = require("./routes/Messages");
+const SERVER_PORT = 3000;
 
+// Initiating Express app
+const express = require('express');
 const app = express();
-const router = require("express").Router;
-const publicPath = path.resolve(__dirname, "../public");
+
+// For JSON parsing of body
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
+//routes
+const routes = require("./routes/messageRoutes");
+app.use("/twilioApi", routes);
 
 
 
-
-app.listen(3000, () => {
-    console.log("Server is running on port 3000");
-}
-);
-
-app.use("/", messagesRoutes);
-
+// Running the server
+app.listen(SERVER_PORT, () => {
+    console.log(`App listening on port ${SERVER_PORT}`)
+})
