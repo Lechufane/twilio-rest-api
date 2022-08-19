@@ -8,6 +8,43 @@ const client = require('twilio')(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 const TWILIO_NUMBER = process.env.NUMERO_CHILE;
 
 
+router.post('/startInteraction', async (req, res) => {
+
+
+    try {
+        let createConversation = await client.conversations.v1.conversations
+        .create(
+            {
+                channel: {
+                    type: 'whatsapp',
+                    initiated_by: 'agent',
+                    properties: {
+                      type: 'whatsapp'
+                    },
+                    participants: [
+                      {
+                        address: 'whatsapp:+5492613440775',
+                        proxy_address: 'whatsapp:+56227127123',
+                        type: 'whatsapp'
+                      }
+                    ]
+                }})
+            let convSid = createConversation.sid;
+            console.log(convSid);
+            let message = await client.conversations.v1.conversations(convSid).messages.create({
+                from: `whatsapp:${TWILIO_NUMBER}`,
+                body: 'Hola Bienvenido a QuePlan.cl'
+            });
+            res.status(200).json({
+                message: 'Message sent'
+            });
+    } catch (error) {
+            console.error('conv Error: ', error);
+             
+    }   
+});
+
+
 router.post('/sendMessage', async (req, res) => {
 
     let convSid;
@@ -28,7 +65,7 @@ router.post('/sendMessage', async (req, res) => {
     try {
     let addParticipantWspp = await client.conversations.v1.conversations(convSid)
     .participants.create({
-        'messagingBinding.address': 'whatsapp:+5492622408898',
+        'messagingBinding.address': 'whatsapp:+5492613440775',
         'messagingBinding.proxyAddress': `whatsapp:+56227127123}`
         })
         .then(participant => {
