@@ -49,14 +49,13 @@ router.post('/sendMessage', async (req, res) => {
 
     let convSid;
     let participantSid;
-    let messageSid;
+    let workerEmail = req.body.workerEmail;
 
     try {
     let createConversation = await client.conversations.v1.conversations
     .create({friendlyName: 'numero-de-cliente'})
     .then(conversation => {
         convSid = conversation.sid;
-        console.log(convSid);
     });
     } catch (error) {
         console.error('conv Error: ', error);
@@ -65,12 +64,28 @@ router.post('/sendMessage', async (req, res) => {
     try {
     let addParticipantWspp = await client.conversations.v1.conversations(convSid)
     .participants.create({
-        'messagingBinding.address': 'whatsapp:+5492613440775',
-        'messagingBinding.proxyAddress': `whatsapp:+56227127123}`
+        'messagingBinding.address': 'whatsapp:+5492616138635',
+        'messagingBinding.proxyAddress': `whatsapp:+56227127123`
         })
         .then(participant => {
+            console.log("participants", participant);
             participantSid = participant.sid;
+
         })
+    } catch (error) {
+        console.error('participant Error: ', error);
+    }
+
+    try {
+    client.conversations.v1.conversations(convSid)
+      .participants(participantSid)
+      .update({attributes: JSON.stringify({
+         workerEmail: workerEmail
+       })})
+      .then(participant => {
+        console.log("participant", participant);
+        participantSid = participant.sid;
+      })
     } catch (error) {
         console.error('participant Error: ', error);
     }
@@ -82,7 +97,7 @@ router.post('/sendMessage', async (req, res) => {
        author:`whatsapp:${TWILIO_NUMBER}`,
        body: 'Hola Bienvenido a QuePlan.cl'
      })
-    .then(message => messageSid = message.sid);
+    .then(message => console.log("messages", message));
 
     } catch (error) {
         console.error('message Error: ', error);
@@ -138,13 +153,44 @@ router.get('/conversationsByParticipant', async(req, res) => {
 
 })
 
-router.get('/getCallsFromNumber', async (req, res) => {
+router.get('/getComs', async (req, res) => {
 
-    let clientCallsLog = await client.insights.v1.callSummaries.list({to: '+56227127123', limit: 20})
+    const clientNumber = req.body.clientNumber
+    const countryPhone = req.body.countryPhone
+    let comsArray = [];
+
+    try{
+    let clientCallsLog = await client.insights.v1.callSummaries.list({from: '+56988082209', limit: 20})
     let clientCallsLogArray = clientCallsLog.map(({from, startTime, endTime, duration, callSid}) => {
-        return {from, startTime, endTime, duration, callSid}
+        comsArray.push({from, date:startTime, endTime, duration, callSid});
     })
-    console.log(clientCallsLogArray);
+
+    let workerCallsLog = await client.insights.v1.callSummaries.list({to: '+56988082209', limit: 20})
+    let workerCallsLogArray = workerCallsLog.map(({from, startTime, endTime, duration, callSid}) => {
+        comsArray.push({from, date:startTime, endTime, duration, callSid});
+    })
+
+
+    let getMessagesFromClient = await client.messages.list({from: `whatsapp:${clientNumber}`,limit: 20})
+    let clientMessages = getMessagesFromClient.map(({body, dateSent, status}) =>{
+        comsArray.push({clientBody:body, date:dateSent, status});
+    })
+
+    let getMessagesFromWorker = await client.messages.list({to: `whatsapp:${clientNumber}`,limit: 20})
+    let workerMessages = getMessagesFromWorker.map(({body, dateSent, status}) =>{
+        comsArray.push({workerBody:body, date:dateSent, status});
+    })
+
+    const sorted = comsArray.sort((a, b) => {
+        return (a.date < b.date) ? -1 : ((a.date > b.date) ? 1 : 0)
+      });
+
+    res.send(sorted)
+
+    } catch(err) {
+        console.error(error)
+    }
+    
 
 });
     
